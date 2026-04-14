@@ -32,7 +32,7 @@ export default function useSpeechToText() {
 
     try {
       const response = await fetch(
-        "http://vanilink-backend.onrender.com/api/v1/livekit/deepgram/getToken",
+        "https://vanilink-backend.onrender.com/api/v1/livekit/deepgram/getToken",
       );
       const { key } = await response.json();
 
