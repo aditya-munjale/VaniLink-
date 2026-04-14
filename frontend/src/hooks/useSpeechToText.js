@@ -3,32 +3,28 @@ import { useRoomContext, useDataChannel } from "@livekit/components-react";
 
 export default function useSpeechToText() {
   const [caption, setCaption] = useState("");
-  const [showCaptions, setShowCaptions] = useState(false); 
+  const [showCaptions, setShowCaptions] = useState(false);
 
   const fullTranscriptRef = useRef("");
   const socketRef = useRef(null);
   const mediaRecorderRef = useRef(null);
   const clearTimerRef = useRef(null);
-  const engineStartedRef = useRef(false); 
+  const engineStartedRef = useRef(false);
 
   const room = useRoomContext();
-
 
   useDataChannel("transcript-channel", (msg) => {
     const decoder = new TextDecoder();
     const data = JSON.parse(decoder.decode(msg.payload));
     const senderName = msg.participant?.identity || "Participant";
 
-   
     fullTranscriptRef.current += `\n${senderName}: ${data.text}`;
     console.log(`📡 [NETWORK RECEIVE] ${senderName}: ${data.text}`);
-
 
     setCaption(`${senderName}: ${data.text}`);
     if (clearTimerRef.current) clearTimeout(clearTimerRef.current);
     clearTimerRef.current = setTimeout(() => setCaption(""), 3000);
   });
-
 
   const startDeepgramEngine = useCallback(async () => {
     if (engineStartedRef.current) return;
@@ -36,7 +32,7 @@ export default function useSpeechToText() {
 
     try {
       const response = await fetch(
-        "http://localhost:8000/api/v1/livekit/deepgram/getToken",
+        "http://vanilink-backend.onrender.com/api/v1/livekit/deepgram/getToken",
       );
       const { key } = await response.json();
 
@@ -63,7 +59,6 @@ export default function useSpeechToText() {
         mediaRecorder.start(250);
       };
 
-    
       socket.onmessage = (message) => {
         const received = JSON.parse(message.data);
         const transcript = received.channel?.alternatives[0]?.transcript;
@@ -74,7 +69,6 @@ export default function useSpeechToText() {
 
           fullTranscriptRef.current += `\n${myName}: ${finalSentence}`;
 
-    
           if (room && room.state === "connected" && room.localParticipant) {
             try {
               const payloadString = JSON.stringify({ text: finalSentence });

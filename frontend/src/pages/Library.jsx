@@ -11,7 +11,7 @@ export default function Library() {
     const fetchSummaries = async () => {
       try {
         const response = await fetch(
-          "http://localhost:8000/api/v1/library/all",
+          "http://vanilink-backend.onrender.com/api/v1/library/all",
         );
         const data = await response.json();
         setSummaries(data);
@@ -30,7 +30,7 @@ export default function Library() {
 
     try {
       const response = await fetch(
-        `http://localhost:8000/api/v1/library/${id}`,
+        `http://vanilink-backend.onrender.com/api/v1/library/${id}`,
         {
           method: "DELETE",
         },
