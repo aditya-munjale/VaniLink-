@@ -13,7 +13,6 @@ export default function Authentication() {
   const [open, setOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
-  const navigate = useNavigate();
   const { handleRegister, handleLogin } = useContext(AuthContext);
 
   // --- FRONTEND VALIDATION ---
@@ -79,7 +78,6 @@ export default function Authentication() {
         <div
           className="absolute inset-0 bg-cover bg-center opacity-40 mix-blend-overlay"
           style={{
-           
             backgroundImage:
               "url('https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?q=80&w=1920&auto=format&fit=crop')",
           }}

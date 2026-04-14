@@ -29,23 +29,35 @@ export default function PostMeetingSummary({
             <div className="text-gray-200 text-lg leading-relaxed">
               <ReactMarkdown
                 components={{
-                  strong: ({ node, ...props }) => (
-                    <span className="font-bold text-purple-300" {...props} />
+                  strong: ({ node, children, ...props }) => (
+                    <span className="font-bold text-purple-300" {...props}>
+                      {children}
+                    </span>
                   ),
-                  ul: ({ node, ...props }) => (
+                  ul: ({ node, children, ...props }) => (
                     <ul
                       className="list-disc pl-6 space-y-3 my-4 marker:text-purple-500"
                       {...props}
-                    />
+                    >
+                      {children}
+                    </ul>
                   ),
-                  li: ({ node, ...props }) => <li {...props} />,
-                  h3: ({ node, ...props }) => (
+                  li: ({ node, children, ...props }) => (
+                    <li {...props}>{children}</li>
+                  ),
+                  h3: ({ node, children, ...props }) => (
                     <h3
                       className="text-2xl font-bold mt-8 mb-3 text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-indigo-400"
                       {...props}
-                    />
+                    >
+                      {children}
+                    </h3>
                   ),
-                  p: ({ node, ...props }) => <p className="mb-4" {...props} />,
+                  p: ({ node, children, ...props }) => (
+                    <p className="mb-4" {...props}>
+                      {children}
+                    </p>
+                  ),
                 }}
               >
                 {summary}

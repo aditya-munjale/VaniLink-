@@ -26,8 +26,6 @@ export default function Library() {
 
   // --- INSTANT DELETE FUNCTION ---
   const handleDelete = async (id) => {
-    // Popup removed!
-
     try {
       const response = await fetch(
         `http://vanilink-backend.onrender.com/api/v1/library/${id}`,
@@ -45,6 +43,7 @@ export default function Library() {
       console.error("Error deleting summary:", error);
     }
   };
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-900 to-[#0f111a] p-8 text-white font-sans">
       <div className="max-w-4xl mx-auto">
@@ -111,20 +110,26 @@ export default function Library() {
                 <div className="text-gray-300 text-lg leading-relaxed">
                   <ReactMarkdown
                     components={{
-                      strong: ({ node, ...props }) => (
-                        <span className="font-bold text-white" {...props} />
+                      strong: ({ node, children, ...props }) => (
+                        <span className="font-bold text-white" {...props}>
+                          {children}
+                        </span>
                       ),
-                      ul: ({ node, ...props }) => (
+                      ul: ({ node, children, ...props }) => (
                         <ul
                           className="list-disc pl-6 space-y-2 my-4 marker:text-purple-500"
                           {...props}
-                        />
+                        >
+                          {children}
+                        </ul>
                       ),
-                      h3: ({ node, ...props }) => (
+                      h3: ({ node, children, ...props }) => (
                         <h3
                           className="text-xl font-bold mt-6 mb-2 text-indigo-300"
                           {...props}
-                        />
+                        >
+                          {children}
+                        </h3>
                       ),
                     }}
                   >
