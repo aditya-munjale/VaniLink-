@@ -1,6 +1,5 @@
 import React, { useState, useContext } from "react";
 import { AuthContext } from "../contexts/AuthContext";
-import { useNavigate } from "react-router-dom";
 import { Snackbar } from "@mui/material";
 
 export default function Authentication() {
