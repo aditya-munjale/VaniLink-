@@ -55,11 +55,6 @@ export default function MeetingLobby({
           )}
         </button>
       </div>
-
-      {/* Small footer hint for mobile */}
-      <p className="text-gray-500 text-[10px] sm:text-xs mt-6 text-center px-4">
-        Ensure your camera and microphone permissions are enabled.
-      </p>
     </div>
   );
 }
