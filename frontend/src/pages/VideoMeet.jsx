@@ -3,7 +3,6 @@ import { useParams } from "react-router-dom";
 import { LiveKitRoom } from "@livekit/components-react";
 import "@livekit/components-styles";
 
-// Import your new components
 import MeetingLobby from "../components/MeetingLobby";
 import ActiveRoomFeatures from "../components/ActiveRoomFeatures";
 import PostMeetingSummary from "../components/PostMeetingSummary";
