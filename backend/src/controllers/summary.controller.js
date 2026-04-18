@@ -11,9 +11,9 @@ const generateSummary = async (req, res) => {
 
   try {
     // 2. Initialize the AI using your secret key
-    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY); // Note: If 2.5-flash continues to throw 503 errors frequently, consider changing this to "gemini-1.5-flash"
+    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY); 
 
-    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" }); // 3. The Smart Prompt
+    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" }); 
 
     const prompt = `
       You are an expert meeting assistant for a community book reading group. 

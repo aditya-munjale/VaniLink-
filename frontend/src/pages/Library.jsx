@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import ReactMarkdown from "react-markdown";
 import { Link } from "react-router-dom";
-import DeleteIcon from "@mui/icons-material/Delete";
+// import DeleteIcon from "@mui/icons-material/Delete";
 
 export default function Library() {
   const [summaries, setSummaries] = useState([]);
@@ -24,24 +24,24 @@ export default function Library() {
     fetchSummaries();
   }, []);
 
-  const handleDelete = async (id) => {
-    try {
-      const response = await fetch(
-        `https://vanilink-backend.onrender.com/api/v1/library/${id}`,
-        {
-          method: "DELETE",
-        },
-      );
+  // const handleDelete = async (id) => {
+  //   try {
+  //     const response = await fetch(
+  //       `https://vanilink-backend.onrender.com/api/v1/library/${id}`,
+  //       {
+  //         method: "DELETE",
+  //       },
+  //     );
 
-      if (response.ok) {
-        setSummaries(summaries.filter((session) => session._id !== id));
-      } else {
-        console.error("Failed to delete summary.");
-      }
-    } catch (error) {
-      console.error("Error deleting summary:", error);
-    }
-  };
+  //     if (response.ok) {
+  //       setSummaries(summaries.filter((session) => session._id !== id));
+  //     } else {
+  //       console.error("Failed to delete summary.");
+  //     }
+  //   } catch (error) {
+  //     console.error("Error deleting summary:", error);
+  //   }
+  // };
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-900 to-[#0f111a] p-4 sm:p-8 text-white font-sans">
@@ -84,13 +84,13 @@ export default function Library() {
                 className="bg-gray-800/40 backdrop-blur-sm border border-gray-700/50 rounded-2xl sm:rounded-3xl p-5 sm:p-8 shadow-xl hover:border-purple-500/30 transition-all relative group"
               >
                 {/* Responsive Delete Button: Always visible on touch, hover on desktop */}
-                <button
+                {/* <button
                   onClick={() => handleDelete(session._id)}
                   className="absolute top-4 right-4 sm:top-6 sm:right-6 p-2 bg-gray-900/50 text-gray-400 hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-all opacity-100 sm:opacity-0 sm:group-hover:opacity-100"
                   title="Delete Summary"
                 >
                   <DeleteIcon fontSize="small" />
-                </button>
+                </button> */}
 
                 <div className="flex flex-col mb-4 sm:mb-6 pr-10">
                   <h2 className="text-xl sm:text-2xl font-bold text-purple-300 break-words">

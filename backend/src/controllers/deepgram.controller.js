@@ -1,5 +1,3 @@
-// Look! No imports needed at all. Node.js natively supports fetch!
-
 export const getDeepgramToken = async (req, res) => {
   try {
     const projectId = process.env.DEEPGRAM_PROJECT_ID;
