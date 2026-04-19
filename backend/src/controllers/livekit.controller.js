@@ -1,6 +1,5 @@
 import { AccessToken } from "livekit-server-sdk";
 
-
 // 1. LIVEKIT TOKEN (Video & Data Permissions)
 
 export const getToken = async (req, res) => {
@@ -10,7 +9,7 @@ export const getToken = async (req, res) => {
     const at = new AccessToken(
       process.env.LIVEKIT_API_KEY,
       process.env.LIVEKIT_API_SECRET,
-      { identity: participantName },
+      { identity: participantName, name: participantName },
     );
 
     at.addGrant({
@@ -28,7 +27,6 @@ export const getToken = async (req, res) => {
     res.status(500).json({ message: "Failed to generate LiveKit token" });
   }
 };
-
 
 // 2. DEEPGRAM TOKEN (Cloud AI Audio Pass)
 

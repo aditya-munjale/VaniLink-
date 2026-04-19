@@ -14,10 +14,6 @@ export default function ActiveRoomFeatures({ onMeetingEnd }) {
     onMeetingEnd(finalNotes);
   };
 
-  const handleUserDisconnect = () => {
-    window.location.href = "/home";
-  };
-
   return (
     <div className="relative h-screen w-full">
       <VideoConference />
@@ -34,24 +30,17 @@ export default function ActiveRoomFeatures({ onMeetingEnd }) {
         </div>
       )}
 
-      {/* Responsive Control Button */}
-      <div className="absolute top-4 right-4 sm:top-6 sm:right-6 z-50">
-        {isAdmin ? (
+      {/* Admin Control Button ONLY */}
+      {isAdmin && (
+        <div className="absolute top-4 right-4 sm:top-6 sm:right-6 z-50">
           <button
             onClick={handleAdminDisconnect}
             className="bg-red-600 hover:bg-red-500 text-white px-4 py-2 sm:px-6 sm:py-3 rounded-lg sm:rounded-xl text-xs sm:text-base font-bold shadow-2xl transition-all border-2 border-red-400 animate-pulse"
           >
             End & Summarize
           </button>
-        ) : (
-          <button
-            onClick={handleUserDisconnect}
-            className="bg-gray-800 hover:bg-gray-700 text-white px-4 py-2 sm:px-6 sm:py-3 rounded-lg sm:rounded-xl text-xs sm:text-base font-bold shadow-2xl transition-all border border-gray-600"
-          >
-            Leave
-          </button>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 }
