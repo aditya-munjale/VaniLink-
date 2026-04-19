@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { LiveKitRoom } from "@livekit/components-react";
 import "@livekit/components-styles";
 
@@ -10,6 +10,7 @@ import { formatTranscript } from "../utils/formatTranscript";
 
 export default function VideoMeetComponent() {
   const { url } = useParams();
+  const navigate = useNavigate();
   const [username, setUsername] = useState("");
   const [roomName, setRoomName] = useState(url || "");
   const [token, setToken] = useState("");
@@ -169,6 +170,7 @@ export default function VideoMeetComponent() {
         serverUrl={liveKitUrl}
         data-lk-theme="default"
         style={{ height: "100%" }}
+        onDisconnected={() => navigate("/home")}
       >
         <ActiveRoomFeatures onMeetingEnd={triggerMeetingSummary} />
       </LiveKitRoom>
