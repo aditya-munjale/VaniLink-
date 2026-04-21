@@ -2,10 +2,21 @@ import React, { useState, useEffect } from "react";
 import ReactMarkdown from "react-markdown";
 import { Link } from "react-router-dom";
 import DeleteIcon from "@mui/icons-material/Delete";
+import EditIcon from "@mui/icons-material/Edit";
+import SaveIcon from "@mui/icons-material/Save";
+import CloseIcon from "@mui/icons-material/Close";
+import ContentCopyIcon from "@mui/icons-material/ContentCopy";
+import CheckIcon from "@mui/icons-material/Check";
 
 export default function Library() {
   const [summaries, setSummaries] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+
+  // --- NEW EDITING & COPY STATES ---
+  const [editingId, setEditingId] = useState(null);
+  const [editTitle, setEditTitle] = useState("");
+  const [editContent, setEditContent] = useState("");
+  const [copiedId, setCopiedId] = useState(null);
 
   useEffect(() => {
     const fetchSummaries = async () => {
@@ -43,10 +54,58 @@ export default function Library() {
     }
   };
 
+  // --- NEW ACTIONS ---
+
+  const handleCopy = (id, content) => {
+    navigator.clipboard.writeText(content);
+    setCopiedId(id);
+    setTimeout(() => setCopiedId(null), 2000); // Reset icon after 2 seconds
+  };
+
+  const startEditing = (session) => {
+    setEditingId(session._id);
+    setEditTitle(session.title);
+    setEditContent(session.content);
+  };
+
+  const cancelEditing = () => {
+    setEditingId(null);
+    setEditTitle("");
+    setEditContent("");
+  };
+
+  const handleSaveEdit = async (id) => {
+    try {
+      const response = await fetch(
+        `https://vanilink-backend.onrender.com/api/v1/library/${id}`,
+        {
+          method: "PUT", // Updating data requires a PUT request
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ title: editTitle, content: editContent }),
+        },
+      );
+
+      if (response.ok) {
+        // Instantly update the UI without refreshing the page
+        setSummaries(
+          summaries.map((session) =>
+            session._id === id
+              ? { ...session, title: editTitle, content: editContent }
+              : session,
+          ),
+        );
+        setEditingId(null); // Close edit mode
+      } else {
+        console.error("Failed to save edited summary.");
+      }
+    } catch (error) {
+      console.error("Error updating summary:", error);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-900 to-[#0f111a] p-4 sm:p-8 text-white font-sans">
       <div className="max-w-4xl mx-auto">
-        {/* Header Section: Vertical on mobile, Horizontal on desktop */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 sm:mb-10 border-b border-gray-700 pb-6 gap-4">
           <h1 className="text-2xl sm:text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-indigo-400">
             Community Library
@@ -83,62 +142,129 @@ export default function Library() {
                 key={session._id}
                 className="bg-gray-800/40 backdrop-blur-sm border border-gray-700/50 rounded-2xl sm:rounded-3xl p-5 sm:p-8 shadow-xl hover:border-purple-500/30 transition-all relative group"
               >
-                {/* Responsive Delete Button: Always visible on touch, hover on desktop */}
-                <button
-                  onClick={() => handleDelete(session._id)}
-                  className="absolute top-4 right-4 sm:top-6 sm:right-6 p-2 bg-gray-900/50 text-gray-400 hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-all opacity-100 sm:opacity-0 sm:group-hover:opacity-100"
-                  title="Delete Summary"
-                >
-                  <DeleteIcon fontSize="small" />
-                </button>
-
-                <div className="flex flex-col mb-4 sm:mb-6 pr-10">
-                  <h2 className="text-xl sm:text-2xl font-bold text-purple-300 break-words">
-                    {session.title}
-                  </h2>
-                  <span className="text-xs sm:text-sm font-medium text-gray-500 bg-gray-900/50 w-fit px-3 py-1 rounded-full mt-2">
-                    {new Date(session.date).toLocaleDateString("en-US", {
-                      year: "numeric",
-                      month: "long",
-                      day: "numeric",
-                    })}
-                  </span>
+                {/* --- UPDATED ACTION BUTTONS --- */}
+                <div className="absolute top-4 right-4 sm:top-6 sm:right-6 flex items-center gap-2 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-all bg-gray-900/80 p-1.5 rounded-xl backdrop-blur-md border border-gray-700">
+                  {editingId === session._id ? (
+                    <>
+                      {/* Editing Mode Buttons: Save & Cancel */}
+                      <button
+                        onClick={() => handleSaveEdit(session._id)}
+                        className="p-2 text-green-400 hover:text-green-300 hover:bg-green-500/20 rounded-lg transition-all"
+                        title="Save Changes"
+                      >
+                        <SaveIcon fontSize="small" />
+                      </button>
+                      <button
+                        onClick={cancelEditing}
+                        className="p-2 text-gray-400 hover:text-gray-200 hover:bg-gray-700 rounded-lg transition-all"
+                        title="Cancel Edit"
+                      >
+                        <CloseIcon fontSize="small" />
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      {/* Normal Mode Buttons: Copy, Edit, Delete */}
+                      <button
+                        onClick={() => handleCopy(session._id, session.content)}
+                        className="p-2 text-blue-400 hover:text-blue-300 hover:bg-blue-500/20 rounded-lg transition-all"
+                        title="Copy Summary"
+                      >
+                        {copiedId === session._id ? (
+                          <CheckIcon
+                            fontSize="small"
+                            className="text-green-400"
+                          />
+                        ) : (
+                          <ContentCopyIcon fontSize="small" />
+                        )}
+                      </button>
+                      <button
+                        onClick={() => startEditing(session)}
+                        className="p-2 text-purple-400 hover:text-purple-300 hover:bg-purple-500/20 rounded-lg transition-all"
+                        title="Edit Summary"
+                      >
+                        <EditIcon fontSize="small" />
+                      </button>
+                      <button
+                        onClick={() => handleDelete(session._id)}
+                        className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-500/20 rounded-lg transition-all"
+                        title="Delete Summary"
+                      >
+                        <DeleteIcon fontSize="small" />
+                      </button>
+                    </>
+                  )}
                 </div>
 
-                <div className="text-gray-300 text-base sm:text-lg leading-relaxed">
-                  <ReactMarkdown
-                    components={{
-                      strong: ({ node, children, ...props }) => (
-                        <span className="font-bold text-white" {...props}>
-                          {children}
-                        </span>
-                      ),
-                      ul: ({ node, children, ...props }) => (
-                        <ul
-                          className="list-disc pl-5 sm:pl-6 space-y-2 my-4 marker:text-purple-500"
-                          {...props}
-                        >
-                          {children}
-                        </ul>
-                      ),
-                      h3: ({ node, children, ...props }) => (
-                        <h3
-                          className="text-lg sm:text-xl font-bold mt-6 mb-2 text-indigo-300"
-                          {...props}
-                        >
-                          {children}
-                        </h3>
-                      ),
-                      p: ({ node, children, ...props }) => (
-                        <p className="mb-3 text-sm sm:text-base" {...props}>
-                          {children}
-                        </p>
-                      ),
-                    }}
-                  >
-                    {session.content}
-                  </ReactMarkdown>
-                </div>
+                {/* --- CONDITIONAL RENDERING: Edit Mode vs View Mode --- */}
+                {editingId === session._id ? (
+                  <div className="flex flex-col gap-4 mt-8 sm:mt-2">
+                    <input
+                      type="text"
+                      value={editTitle}
+                      onChange={(e) => setEditTitle(e.target.value)}
+                      className="text-xl sm:text-2xl font-bold text-white bg-gray-900 border border-gray-600 rounded-lg px-4 py-2 focus:outline-none focus:border-purple-500"
+                      placeholder="Meeting Title"
+                    />
+                    <textarea
+                      value={editContent}
+                      onChange={(e) => setEditContent(e.target.value)}
+                      className="w-full min-h-[300px] text-gray-300 text-sm sm:text-base font-mono bg-gray-900 border border-gray-600 rounded-lg px-4 py-3 focus:outline-none focus:border-purple-500 resize-y"
+                      placeholder="Edit your markdown content here..."
+                    />
+                  </div>
+                ) : (
+                  <>
+                    <div className="flex flex-col mb-4 sm:mb-6 pr-32">
+                      <h2 className="text-xl sm:text-2xl font-bold text-purple-300 break-words">
+                        {session.title}
+                      </h2>
+                      <span className="text-xs sm:text-sm font-medium text-gray-500 bg-gray-900/50 w-fit px-3 py-1 rounded-full mt-2">
+                        {new Date(session.date).toLocaleDateString("en-US", {
+                          year: "numeric",
+                          month: "long",
+                          day: "numeric",
+                        })}
+                      </span>
+                    </div>
+
+                    <div className="text-gray-300 text-base sm:text-lg leading-relaxed">
+                      <ReactMarkdown
+                        components={{
+                          strong: ({ node, children, ...props }) => (
+                            <span className="font-bold text-white" {...props}>
+                              {children}
+                            </span>
+                          ),
+                          ul: ({ node, children, ...props }) => (
+                            <ul
+                              className="list-disc pl-5 sm:pl-6 space-y-2 my-4 marker:text-purple-500"
+                              {...props}
+                            >
+                              {children}
+                            </ul>
+                          ),
+                          h3: ({ node, children, ...props }) => (
+                            <h3
+                              className="text-lg sm:text-xl font-bold mt-6 mb-2 text-indigo-300"
+                              {...props}
+                            >
+                              {children}
+                            </h3>
+                          ),
+                          p: ({ node, children, ...props }) => (
+                            <p className="mb-3 text-sm sm:text-base" {...props}>
+                              {children}
+                            </p>
+                          ),
+                        }}
+                      >
+                        {session.content}
+                      </ReactMarkdown>
+                    </div>
+                  </>
+                )}
               </div>
             ))}
         </div>

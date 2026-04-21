@@ -46,3 +46,31 @@ export const deleteSummary = async (req, res) => {
     res.status(500).json({ message: "Failed to delete summary." });
   }
 };
+
+// 4. Update an existing summary
+export const updateSummary = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { title, content } = req.body;
+
+    const updatedSummary = await Summary.findByIdAndUpdate(
+      id,
+      { title, content },
+      { new: true }, // This tells MongoDB to return the newly updated document
+    );
+
+    if (!updatedSummary) {
+      return res.status(404).json({ message: "Summary not found." });
+    }
+
+    res
+      .status(200)
+      .json({
+        message: "Summary updated successfully",
+        summary: updatedSummary,
+      });
+  } catch (error) {
+    console.error("Update Error:", error);
+    res.status(500).json({ message: "Failed to update summary." });
+  }
+};
