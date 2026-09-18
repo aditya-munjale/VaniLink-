@@ -75,11 +75,17 @@ export default function VideoMeetComponent() {
     setIsSummarizing(true);
     try {
       const response = await fetch(
-        "https://vanilink-backend.onrender.com/api/v1/meetings/summary",
+        // NOTE: Make sure this URL matches your local testing URL for now
+        "http://localhost:8000/api/v1/meetings/summary",
+        // "https://vanilink-backend.onrender.com/api/v1/meetings/summary",
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ transcript: cleanScript }),
+          // NEW: We pass meetingCode instead of meetingId
+          body: JSON.stringify({
+            transcript: cleanScript,
+            meetingCode: roomName,
+          }),
         },
       );
 

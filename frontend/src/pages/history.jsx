@@ -90,9 +90,6 @@ export default function History() {
                 />
                 History
               </h1>
-              <p className="text-gray-500 text-xs sm:text-sm mt-1 font-medium">
-                Auto-deletes after 14 days
-              </p>
             </div>
           </div>
 
