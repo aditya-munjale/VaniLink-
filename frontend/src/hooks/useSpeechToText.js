@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useRoomContext, useDataChannel } from "@livekit/components-react";
+import server from "../environment.js";
 
 export default function useSpeechToText() {
   const [caption, setCaption] = useState("");
@@ -32,7 +33,7 @@ export default function useSpeechToText() {
 
     try {
       const response = await fetch(
-        "https://vanilink-backend.onrender.com/api/v1/livekit/deepgram/getToken",
+        `${server}/api/v1/livekit/deepgram/getToken`,
       );
       const { key } = await response.json();
 

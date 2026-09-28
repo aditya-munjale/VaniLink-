@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useContext } from "react";
 import { AuthContext } from "../contexts/AuthContext";
 import { Snackbar } from "@mui/material";
-import axios from "axios"; // Assuming you use axios, or use fetch
+import axios from "axios";
+import server from "../environment.js";
 
 export default function Authentication() {
   const [username, setUsername] = useState("");
@@ -19,14 +20,11 @@ export default function Authentication() {
 
   const { handleRegister, handleLogin } = useContext(AuthContext);
 
-  // --- FETCH COUNSELORS ON MOUNT ---
   useEffect(() => {
     const fetchCounselors = async () => {
       try {
-        // Adjust the URL to match your backend port and route
-        const response = await axios.get(
-          "http://localhost:8000/api/v1/users/counselors",
-        );
+        // Use the dynamic server variable instead of hardcoded localhost
+        const response = await axios.get(`${server}/api/v1/users/counselors`);
         setCounselors(response.data);
       } catch (err) {
         console.error("Failed to fetch counselors:", err);

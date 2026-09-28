@@ -7,7 +7,8 @@ import MeetingLobby from "../components/MeetingLobby";
 import ActiveRoomFeatures from "../components/ActiveRoomFeatures";
 import PostMeetingSummary from "../components/PostMeetingSummary";
 import { formatTranscript } from "../utils/formatTranscript";
-import server from "../environment";
+
+import server from "../environment.js";
 
 export default function VideoMeetComponent() {
   const { url } = useParams();
@@ -36,14 +37,11 @@ export default function VideoMeetComponent() {
     try {
       setIsLoading(true);
       setError("");
-      const response = await fetch(
-        "https://vanilink-backend.onrender.com/api/v1/livekit/getToken",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ roomName, participantName: username }),
-        },
-      );
+      const response = await fetch(`${server}/api/v1/livekit/getToken`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ roomName, participantName: username }),
+      });
       const data = await response.json();
       if (response.ok) {
         setToken(data.token);
@@ -103,8 +101,6 @@ export default function VideoMeetComponent() {
       setIsSummarizing(false);
     }
   };
-
-  //  "https://vanilink-backend.onrender.com/api/v1/library/save",
 
   const handleSaveToLibrary = async () => {
     if (!sessionTitle.trim()) {

@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import axios from "axios";
 import { Snackbar } from "@mui/material";
+import server from "../environment.js";
 
 export default function ScheduleSession() {
   const [title, setTitle] = useState("");
@@ -23,7 +24,7 @@ export default function ScheduleSession() {
       const token = localStorage.getItem("token");
 
       const response = await axios.post(
-        "http://localhost:8000/api/v1/livekit/schedule", // Adjust port/route if needed
+        `${server}/api/v1/livekit/schedule`, // Adjust port/route if needed
         { title, startTime },
         {
           headers: {

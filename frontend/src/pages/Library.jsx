@@ -7,6 +7,7 @@ import SaveIcon from "@mui/icons-material/Save";
 import CloseIcon from "@mui/icons-material/Close";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import CheckIcon from "@mui/icons-material/Check";
+import server from "../environment.js";
 
 export default function Library() {
   const [summaries, setSummaries] = useState([]);
@@ -20,9 +21,7 @@ export default function Library() {
   useEffect(() => {
     const fetchSummaries = async () => {
       try {
-        const response = await fetch(
-          "https://vanilink-backend.onrender.com/api/v1/library/all",
-        );
+        const response = await fetch(`${server}/api/v1/library/all`);
         const data = await response.json();
         setSummaries(data);
       } catch (error) {
@@ -36,12 +35,9 @@ export default function Library() {
 
   const handleDelete = async (id) => {
     try {
-      const response = await fetch(
-        `https://vanilink-backend.onrender.com/api/v1/library/${id}`,
-        {
-          method: "DELETE",
-        },
-      );
+      const response = await fetch(`${server}/api/v1/library/${id}`, {
+        method: "DELETE",
+      });
 
       if (response.ok) {
         setSummaries(summaries.filter((session) => session._id !== id));
@@ -74,7 +70,7 @@ export default function Library() {
   const handleSaveEdit = async (id) => {
     try {
       const response = await fetch(
-        `http://vanilink-backend.onrender.com/api/v1/library/${id}`, 
+        `http://vanilink-backend.onrender.com/api/v1/library/${id}`,
         {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
