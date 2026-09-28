@@ -3,8 +3,8 @@ import { Meeting } from "../models/meeting.model.js";
 import agenda from "../jobs/agenda.js";
 
 const generateSummary = async (req, res) => {
-  // NEW: We now expect meetingId so we know who to email
-  const { transcript, meetingId } = req.body;
+  // Extract transcript and meetingCode from the frontend request
+  const { transcript, meetingCode } = req.body;
 
   if (!transcript || transcript.trim() === "") {
     return res
@@ -62,34 +62,22 @@ const generateSummary = async (req, res) => {
       }
     }
 
-    // --- NEW: Trigger the background summary agent ---
-    if (req.body.meetingCode) {
-      // Find the most recently scheduled meeting with this code
-      const meeting = await Meeting.findOne({
-        meetingCode: req.body.meetingCode,
-      }).sort({ createdAt: -1 });
+    // // --- CLEANED UP BACKGROUND TRIGGER ---
+    // if (meetingCode) {
+    //   await agenda.now("send-summary-email", {
+    //     meetingCode: meetingCode,
+    //     summaryText: summaryText,
+    //     counselorName: req.user?.name, // From your authenticate middleware
+    //   });
 
-      if (meeting) {
-        await agenda.now("send-summary-email", {
-          meetingId: meeting._id.toString(), // Extract the MongoDB _id for Agenda
-          summaryText: summaryText,
-        });
-        console.log(
-          `[SummaryController] Triggered background email agent for meeting code ${req.body.meetingCode}`,
-        );
-      } else {
-        console.warn(
-          `[SummaryController] Could not find a scheduled meeting in MongoDB for code: ${req.body.meetingCode}`,
-        );
-      }
-      console.log(
-        `[SummaryController] Triggered background email agent for meeting ${meetingId}`,
-      );
-    } else {
-      console.warn(
-        `[SummaryController] No meetingId provided. AI summary generated, but emails will NOT be sent.`,
-      );
-    }
+    //   console.log(
+    //     `[SummaryController] Queued summary email job for meeting code: ${meetingCode}`,
+    //   );
+    // } else {
+    //   console.warn(
+    //     `[SummaryController] No meetingCode provided in request. AI summary generated, but emails will NOT be sent.`,
+    //   );
+    // }
     // ------------------------------------------------
 
     res.status(200).json({ summary: summaryText });

@@ -1,9 +1,10 @@
-import React from "react";
+import React, { useState } from "react";
 import ReactMarkdown from "react-markdown";
 
 export default function PostMeetingSummary({
   isSummarizing,
   summary,
+  setSummary, // New prop to handle edits
   sessionTitle,
   setSessionTitle,
   handleSaveToLibrary,
@@ -11,12 +12,24 @@ export default function PostMeetingSummary({
   saveMessage,
   setMeetingEnded,
 }) {
+  const [isEditing, setIsEditing] = useState(false);
+
   return (
     <div className="min-h-screen flex flex-col items-center p-4 sm:p-8 bg-gradient-to-b from-gray-900 to-[#0f111a] font-sans text-white">
       <div className="max-w-3xl w-full bg-gray-800/50 backdrop-blur-xl border border-gray-700/50 rounded-2xl sm:rounded-3xl p-5 sm:p-8 shadow-2xl mt-4 sm:mt-10">
-        <h2 className="text-2xl sm:text-3xl font-black mb-4 sm:mb-6 text-center sm:text-left text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-indigo-400">
-          Meeting Summary
-        </h2>
+        <div className="flex justify-between items-center mb-4 sm:mb-6">
+          <h2 className="text-2xl sm:text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-indigo-400">
+            Meeting Summary
+          </h2>
+          {!isSummarizing && summary && (
+            <button
+              onClick={() => setIsEditing(!isEditing)}
+              className="bg-gray-700 hover:bg-gray-600 px-4 py-2 rounded-lg text-sm font-bold transition-colors"
+            >
+              {isEditing ? "👀 Preview mode" : "✏️ Edit Notes"}
+            </button>
+          )}
+        </div>
 
         <div className="bg-gray-900/50 rounded-xl p-4 sm:p-6 min-h-[200px] border border-gray-700">
           {isSummarizing ? (
@@ -26,6 +39,13 @@ export default function PostMeetingSummary({
                 Gemini AI is analyzing the transcript...
               </p>
             </div>
+          ) : isEditing ? (
+            <textarea
+              value={summary}
+              onChange={(e) => setSummary(e.target.value)}
+              className="w-full h-96 bg-transparent text-gray-200 text-sm sm:text-base outline-none resize-y font-mono"
+              placeholder="Edit your summary here..."
+            />
           ) : (
             <div className="text-gray-200 text-base sm:text-lg leading-relaxed">
               <ReactMarkdown
@@ -70,13 +90,13 @@ export default function PostMeetingSummary({
         {!isSummarizing && summary && (
           <div className="mt-6 sm:mt-8 bg-gray-900/50 p-5 sm:p-6 rounded-xl border border-gray-700">
             <h3 className="text-lg sm:text-xl font-bold mb-3 sm:mb-4 text-purple-400">
-              Save this Session
+              Save & Email Devotees
             </h3>
             <input
               type="text"
               value={sessionTitle}
               onChange={(e) => setSessionTitle(e.target.value)}
-              placeholder="e.g., Team Sync"
+              placeholder="e.g., Chapter 2 - Vaishnava Compassion"
               className="w-full px-4 sm:px-5 py-3 mb-4 bg-gray-800 border border-gray-600 rounded-xl text-white outline-none focus:ring-2 focus:ring-purple-500 text-sm sm:text-base"
             />
             <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
@@ -85,20 +105,18 @@ export default function PostMeetingSummary({
                 disabled={isSaving}
                 className="flex-1 bg-purple-600 hover:bg-purple-500 text-white font-bold py-3 rounded-xl transition-all shadow-lg disabled:opacity-50 text-sm sm:text-base"
               >
-                {isSaving ? "Saving..." : "📚 Publish to Library"}
+                {isSaving ? "Publishing..." : "📚 Publish & Send Emails"}
               </button>
               <button
                 onClick={() => setMeetingEnded(false)}
                 className="flex-1 bg-gray-700 hover:bg-gray-600 text-white font-bold py-3 rounded-xl transition-all text-sm sm:text-base"
               >
-                Return to Lobby
+                Cancel
               </button>
             </div>
             {saveMessage && (
               <p
-                className={`mt-4 text-center font-bold text-sm sm:text-base ${
-                  saveMessage.includes("✨") ? "text-green-400" : "text-red-400"
-                }`}
+                className={`mt-4 text-center font-bold text-sm sm:text-base ${saveMessage.includes("✨") ? "text-green-400" : "text-red-400"}`}
               >
                 {saveMessage}
               </p>

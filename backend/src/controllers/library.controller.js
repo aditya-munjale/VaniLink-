@@ -1,9 +1,11 @@
 import { Summary } from "../models/summary.model.js";
+import agenda from "../jobs/agenda.js";
 
 // 1. Save a new summary to the database
 export const saveSummary = async (req, res) => {
   try {
-    const { title, content } = req.body;
+    // Extract meetingCode sent from the updated frontend
+    const { title, content, meetingCode } = req.body;
 
     if (!content) {
       return res
@@ -12,11 +14,26 @@ export const saveSummary = async (req, res) => {
     }
 
     const newSummary = new Summary({ title, content });
-    await newSummary.save(); // Saves to MongoDB
+    await newSummary.save(); 
+
+    // --- NEW: Trigger the email agent after successful save ---
+    if (meetingCode) {
+      await agenda.now("send-summary-email", {
+        meetingCode: meetingCode,
+        summaryText: content, // This is the final, edited text from the counselor
+        counselorName: req.user?.name,
+      });
+      console.log(
+        `[LibraryController] Post-publish emails triggered for ${meetingCode}`,
+      );
+    }
 
     res
       .status(201)
-      .json({ message: "Summary saved to library!", summary: newSummary });
+      .json({
+        message: "Summary saved to library and emails dispatched!",
+        summary: newSummary,
+      });
   } catch (error) {
     console.error("Database Error:", error);
     res.status(500).json({ message: "Failed to save summary." });
@@ -63,12 +80,10 @@ export const updateSummary = async (req, res) => {
       return res.status(404).json({ message: "Summary not found." });
     }
 
-    res
-      .status(200)
-      .json({
-        message: "Summary updated successfully",
-        summary: updatedSummary,
-      });
+    res.status(200).json({
+      message: "Summary updated successfully",
+      summary: updatedSummary,
+    });
   } catch (error) {
     console.error("Update Error:", error);
     res.status(500).json({ message: "Failed to update summary." });

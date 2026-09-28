@@ -17,17 +17,16 @@ export const AuthProvider = ({ children }) => {
 
   const router = useNavigate();
 
-  const handleRegister = async (name, username, password) => {
+  const handleRegister = async (name, username, password, counselorGroupId) => {
     try {
-      let request = await client.post("/register", {
-        name: name,
-        username: username,
-        password: password,
+      let request = await axios.post(`${server}/api/v1/users/register`, {
+        name,
+        username,
+        password,
+        role: "devotee",
+        counselorGroupId,
       });
-
-      if (request.status === httpStatus.CREATED) {
-        return request.data.message;
-      }
+      return request.data.message;
     } catch (err) {
       throw err;
     }
@@ -42,6 +41,7 @@ export const AuthProvider = ({ children }) => {
 
       if (request.status === httpStatus.OK) {
         localStorage.setItem("token", request.data.token);
+        localStorage.setItem("role", request.data.role);
 
         // Catch the new data sent from the backend!
         setUserData({

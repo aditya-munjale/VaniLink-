@@ -1,12 +1,17 @@
 import express from "express";
-import { generateSummary } from "../controllers/summary.controller.js";
 import {
-  scheduleMeeting /*, your other summary functions */,
+  generateSummary,
+  scheduleMeeting,
 } from "../controllers/summary.controller.js";
+
+
+import { authenticate } from "../middlewares/auth.middleware.js";
+import { verifyAdminOrCounselor } from "../middlewares/role.middleware.js";
 
 const router = express.Router();
 
-router.post("/summary", generateSummary);
-router.post("/schedule", scheduleMeeting);
+
+router.post("/summary", authenticate, verifyAdminOrCounselor, generateSummary);
+router.post("/schedule", authenticate, verifyAdminOrCounselor, scheduleMeeting);
 
 export default router;

@@ -1,7 +1,7 @@
-let IS_PROD = true;
+let IS_PROD = false;
 
 const server = IS_PROD
-  ? "https://vanilink-backend.onrender.com" // <-- future live backend URL will go here!
-  : "http://localhost:8000"; // <--  current local development server
+  ? "https://vanilink-backend.onrender.com"
+  : "http://localhost:8000";
 
 export default server;

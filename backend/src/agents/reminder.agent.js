@@ -1,4 +1,3 @@
-import { Meeting } from "../models/meeting.model.js";
 import { sendEmail } from "../services/email.service.js";
 
 /**
@@ -6,90 +5,56 @@ import { sendEmail } from "../services/email.service.js";
  * @param {import("agenda").Agenda} agenda - The Agenda instance
  */
 export const defineReminderAgent = (agenda) => {
-  agenda.define("send-meeting-reminder", async (job) => {
-    // 1. Get the specific meeting ID passed into this job
-    const { meetingId } = job.attrs.data;
+  agenda.define("send-reminder-email", async (job) => {
+    // 1. Extract the exact data passed from livekit.controller.js
+    const { meetingCode, title, counselorName, participants } = job.attrs.data;
+
+    console.log(`[ReminderAgent] Processing reminder for: ${title}`);
     console.log(
-      `[ReminderAgent] Processing reminder for meeting ID: ${meetingId}`,
+      `[ReminderAgent] Sending to ${participants?.length || 0} devotees.`,
     );
 
     try {
-      // 2. Fetch the meeting from MongoDB
-      const meeting = await Meeting.findById(meetingId);
-
-      // 3. Idempotency & Safety Checks
-      if (!meeting) {
+      if (!participants || participants.length === 0) {
         console.log(
-          `[ReminderAgent] Meeting ${meetingId} not found. Aborting.`,
-        );
-        return;
-      }
-      if (meeting.status !== "scheduled") {
-        console.log(
-          `[ReminderAgent] Meeting ${meetingId} is cancelled or active. Aborting.`,
-        );
-        return;
-      }
-      if (meeting.reminderSent) {
-        console.log(
-          `[ReminderAgent] Reminder already sent for ${meetingId}. Aborting.`,
+          "[ReminderAgent] No participants found in group. Aborting email.",
         );
         return;
       }
 
-      let allEmailsSuccessful = true;
+      // 2. Send ONE email using BCC so devotees cannot see each other's email addresses
+      await sendEmail({
+        to: process.env.EMAIL_USER, // Send it to your own system email
+        bcc: participants, // This array of emails is hidden from recipients
+        subject: `Reminder: "${title}" is starting soon!`,
+        text: `Hare Krishna!\n\nYour reading session "${title}" with ${counselorName} is starting in 15 minutes.\n\nJoin Code: ${meetingCode}\n\nEnter the lobby here: https://vanilink.vercel.app/`,
+        html: `
+          <div style="font-family: Arial, sans-serif; padding: 20px; color: #333; max-width: 600px;">
+            <h2>Hare Krishna! 🙏</h2>
+            <p>Your reading session <b>"${title}"</b> with <b>${counselorName}</b> is starting in about 15 minutes.</p>
+            
+            <div style="background-color: #f3f4f6; padding: 15px; border-radius: 8px; margin: 20px 0;">
+                <p style="margin: 0; font-size: 16px;"><b>Join Code:</b> <span style="font-family: monospace; font-size: 18px; color: #d97706;">${meetingCode}</span></p>
+            </div>
+            
+            <!-- VaniLink Styled URL Button -->
+            <a href="https://vanilink.vercel.app/" 
+               style="background-color: #7C3AED; color: #ffffff; padding: 14px 28px; text-decoration: none; border-radius: 10px; font-weight: bold; display: inline-block; margin-bottom: 20px;">
+              Enter VaniLink Lobby
+            </a>
+            
+            <p style="margin-top: 10px; font-size: 13px; color: #777;">
+              If the button doesn't work, copy and paste this link into your browser:<br/>
+              <a href="https://vanilink.vercel.app/" style="color: #7C3AED;">https://vanilink.vercel.app/</a>
+            </p>
+          </div>
+        `,
+      });
 
-      // 4. Loop through participants and send emails
-      for (const participant of meeting.participants) {
-        // Only send if we haven't already sent to this specific person
-        if (participant.reminderStatus === "pending") {
-          try {
-            console.log(
-              `[ReminderAgent] Sending email to ${participant.email}...`,
-            );
-
-            await sendEmail({
-              to: participant.email,
-              subject: `Reminder: "${meeting.title}" is starting soon!`,
-              text: `Hi ${participant.name},\n\nYour meeting "${meeting.title}" is starting in 15 minutes.\n\nJoin Code: ${meeting.meetingCode}`,
-              html: `
-                <div style="font-family: Arial, sans-serif; padding: 20px;">
-                  <h2>Meeting Reminder</h2>
-                  <p>Hi <b>${participant.name}</b>,</p>
-                  <p>Your session <b>"${meeting.title}"</b> is starting in about 15 minutes.</p>
-                  <p><b>Join Code:</b> ${meeting.meetingCode}</p>
-                </div>
-              `,
-            });
-
-            // Mark this specific participant as successful
-            participant.reminderStatus = "sent";
-            participant.reminderSentAt = new Date();
-          } catch (error) {
-            console.error(
-              `[ReminderAgent] Failed to email ${participant.email}:`,
-              error.message,
-            );
-            participant.reminderStatus = "failed";
-            allEmailsSuccessful = false;
-          }
-        }
-      }
-
-      // 5. Update the main meeting document
-      if (allEmailsSuccessful) {
-        meeting.reminderSent = true;
-        meeting.reminderSentAt = new Date();
-      }
-
-      // 6. Save the atomic updates to MongoDB
-      await meeting.save();
-      console.log(
-        `[ReminderAgent] Finished processing for meeting ID: ${meetingId}`,
-      );
+      console.log(`[ReminderAgent] Finished processing for: ${title}`);
     } catch (error) {
-      console.error(`[ReminderAgent] Critical error processing job:`, error);
-      throw error; // Throwing tells Agenda the job failed so it can automatically retry it later
+      console.error(`[ReminderAgent] Critical error sending emails:`, error);
+      throw error;
     }
   });
 };

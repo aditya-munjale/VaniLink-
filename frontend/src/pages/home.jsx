@@ -7,13 +7,18 @@ import VideoCallIcon from "@mui/icons-material/VideoCall";
 import LogoutIcon from "@mui/icons-material/Logout";
 import HistoryIcon from "@mui/icons-material/History";
 import { AuthContext } from "../contexts/AuthContext";
+import ScheduleSession from "../components/ScheduleSession";
 
 function HomeComponent() {
   let navigate = useNavigate();
   const [meetingCode, setMeetingCode] = useState("");
   const [isCreatingMeeting, setIsCreatingMeeting] = useState(false);
 
-  const { addToUserHistory } = useContext(AuthContext);
+  // Extract user from context (ensure your AuthContext provides this!)
+  const { addToUserHistory, user } = useContext(AuthContext);
+
+  // Fallback to localStorage if your AuthContext doesn't expose the user object directly
+  const userRole = user?.role || localStorage.getItem("role");
 
   let handleJoinVideoCall = async () => {
     if (meetingCode.trim()) {
@@ -68,6 +73,7 @@ function HomeComponent() {
             <button
               onClick={() => {
                 localStorage.removeItem("token");
+                localStorage.removeItem("role"); // Clear role on logout
                 navigate("/auth");
               }}
               className="flex items-center space-x-1 bg-white border border-gray-200 hover:border-red-200 hover:bg-red-50 text-gray-700 hover:text-red-600 px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg sm:rounded-xl font-semibold text-xs sm:text-sm transition-all"
@@ -82,7 +88,7 @@ function HomeComponent() {
       {/* Main Content */}
       <main className="px-4 sm:px-6 lg:px-8 py-8 sm:py-20">
         <div className="max-w-6xl mx-auto">
-          <div className="flex flex-col lg:flex-row items-center justify-between gap-10 lg:gap-12">
+          <div className="flex flex-col lg:flex-row items-start justify-between gap-10 lg:gap-12">
             {/* Left Content */}
             <div className="w-full lg:w-1/2 flex flex-col items-center lg:items-start text-center lg:text-left">
               <div className="inline-block px-3 py-1 rounded-full bg-purple-100 text-purple-700 font-bold text-xs sm:text-sm mb-4 sm:mb-6 border border-purple-200">
@@ -154,8 +160,8 @@ function HomeComponent() {
               </Link>
             </div>
 
-            {/* Right Content - Join Form */}
-            <div className="w-full lg:w-[45%] mt-4 lg:mt-0">
+            {/* Right Content - Join Form & Scheduling */}
+            <div className="w-full lg:w-[45%] mt-4 lg:mt-0 flex flex-col gap-6">
               <div className="bg-white rounded-2xl sm:rounded-3xl p-6 sm:p-8 shadow-xl shadow-gray-200/50 border border-gray-100 w-full max-w-md mx-auto relative overflow-hidden">
                 <div className="absolute -top-24 -right-24 w-48 h-48 bg-purple-400 opacity-10 rounded-full blur-3xl"></div>
 
@@ -204,7 +210,7 @@ function HomeComponent() {
                 </div>
 
                 {isCreatingMeeting && (
-                  <div className="mt-4 p-3 sm:p-4 bg-purple-50 rounded-xl border border-purple-100 flex items-center justify-between">
+                  <div className="mt-4 p-3 sm:p-4 bg-purple-50 rounded-xl border border-purple-100 flex items-center justify-between relative z-10">
                     <div>
                       <p className="text-purple-600 text-[10px] font-bold uppercase tracking-wider mb-1">
                         Your Link
@@ -222,6 +228,13 @@ function HomeComponent() {
                   </div>
                 )}
               </div>
+
+              {/* --- ONLY RENDER THIS FOR COUNSELORS --- */}
+              {userRole === "counselor" && (
+                <div className="w-full max-w-md mx-auto animate-fade-in">
+                  <ScheduleSession />
+                </div>
+              )}
             </div>
           </div>
         </div>

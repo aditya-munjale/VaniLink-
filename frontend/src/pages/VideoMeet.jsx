@@ -7,6 +7,7 @@ import MeetingLobby from "../components/MeetingLobby";
 import ActiveRoomFeatures from "../components/ActiveRoomFeatures";
 import PostMeetingSummary from "../components/PostMeetingSummary";
 import { formatTranscript } from "../utils/formatTranscript";
+import server from "../environment";
 
 export default function VideoMeetComponent() {
   const { url } = useParams();
@@ -57,13 +58,12 @@ export default function VideoMeetComponent() {
       setIsLoading(false);
     }
   };
-
   const triggerMeetingSummary = async (finalTranscript) => {
     const cleanScript = formatTranscript(finalTranscript);
     setMeetingEnded(true);
 
     setTimeout(() => {
-      setToken("");
+      setToken(""); // Disconnects LiveKit
     }, 300);
 
     if (!cleanScript || cleanScript.trim() === "") {
@@ -74,14 +74,16 @@ export default function VideoMeetComponent() {
 
     setIsSummarizing(true);
     try {
+      // 1. Retrieve the token your AuthContext saved during login
+      const jwtToken = localStorage.getItem("token");
       const response = await fetch(
-        // NOTE: Make sure this URL matches your local testing URL for now
-        "http://localhost:8000/api/v1/meetings/summary",
-        // "https://vanilink-backend.onrender.com/api/v1/meetings/summary",
+        `${server}/api/v1/meetings/summary`, // <-- UPDATE THIS LINE
         {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
-          // NEW: We pass meetingCode instead of meetingId
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${jwtToken}`,
+          },
           body: JSON.stringify({
             transcript: cleanScript,
             meetingCode: roomName,
@@ -102,6 +104,8 @@ export default function VideoMeetComponent() {
     }
   };
 
+  //  "https://vanilink-backend.onrender.com/api/v1/library/save",
+
   const handleSaveToLibrary = async () => {
     if (!sessionTitle.trim()) {
       setSaveMessage("Please enter a title for this reading session!");
@@ -110,16 +114,25 @@ export default function VideoMeetComponent() {
     setIsSaving(true);
     setSaveMessage("");
     try {
+      const jwtToken = localStorage.getItem("token"); // Grab token for auth
+
       const response = await fetch(
-        "https://vanilink-backend.onrender.com/api/v1/library/save",
+        `${server}/api/v1/library/save`, // Use dynamic server variable
         {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ title: sessionTitle, content: summary }),
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${jwtToken}`,
+          },
+          body: JSON.stringify({
+            title: sessionTitle,
+            content: summary,
+            meetingCode: roomName, // <-- NEW: Send the code so the backend can trigger the email
+          }),
         },
       );
       if (response.ok) {
-        setSaveMessage("✨ Successfully saved to the Community Library!");
+        setSaveMessage("✨ Successfully saved & emails dispatched!");
       } else {
         setSaveMessage("Failed to save. Please try again.");
       }
@@ -138,6 +151,7 @@ export default function VideoMeetComponent() {
         isSummarizing={isSummarizing}
         summary={summary}
         sessionTitle={sessionTitle}
+        setSummary={setSummary}
         setSessionTitle={setSessionTitle}
         handleSaveToLibrary={handleSaveToLibrary}
         isSaving={isSaving}

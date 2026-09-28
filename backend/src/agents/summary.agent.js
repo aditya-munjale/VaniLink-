@@ -1,5 +1,6 @@
-import { Meeting } from "../models/meeting.model.js";
+import { CounselorGroup } from "../models/CounselorGroup.js";
 import { sendEmail } from "../services/email.service.js";
+import { marked } from "marked"; // 1. Import marked
 
 /**
  * Defines the job logic for sending post-meeting summaries.
@@ -7,78 +8,74 @@ import { sendEmail } from "../services/email.service.js";
  */
 export const defineSummaryAgent = (agenda) => {
   agenda.define("send-summary-email", async (job) => {
-    // We pass both the meeting ID and the actual summary text into the job
-    const { meetingId, summaryText } = job.attrs.data;
+    const { meetingCode, summaryText, counselorName } = job.attrs.data;
     console.log(
-      `[SummaryAgent] Processing post-meeting summary for meeting ID: ${meetingId}`,
+      `[SummaryAgent] Processing summary email for room code: ${meetingCode}`,
     );
 
     try {
-      const meeting = await Meeting.findById(meetingId);
+      let group = await CounselorGroup.findOne({
+        dedicatedMeetingCode: meetingCode,
+      }).populate("devotees", "name username");
 
-      // Idempotency & Safety Checks
-      if (!meeting) {
-        console.log(`[SummaryAgent] Meeting ${meetingId} not found. Aborting.`);
-        return;
+      if (!group && counselorName) {
+        group = await CounselorGroup.findOne({
+          counselorName: counselorName,
+        }).populate("devotees", "name username");
       }
-      if (meeting.summarySent) {
-        console.log(
-          `[SummaryAgent] Summary already sent for ${meetingId}. Aborting.`,
+
+      if (!group) {
+        console.warn(
+          `[SummaryAgent] No counselor group found for code: ${meetingCode}. Aborting.`,
         );
         return;
       }
 
-      let allEmailsSuccessful = true;
+      const devoteeEmails = group.devotees
+        ?.map((d) => d.username)
+        .filter(Boolean);
 
-      for (const participant of meeting.participants) {
-        if (participant.summaryStatus === "pending") {
-          try {
-            console.log(
-              `[SummaryAgent] Sending summary to ${participant.email}...`,
-            );
-
-            await sendEmail({
-              to: participant.email,
-              subject: `Meeting Summary: "${meeting.title}"`,
-              text: `Hi ${participant.name},\n\nHere is the summary from your recent session "${meeting.title}":\n\n${summaryText}`,
-              html: `
-                <div style="font-family: Arial, sans-serif; padding: 20px; line-height: 1.6;">
-                  <h2>Meeting Summary: ${meeting.title}</h2>
-                  <p>Hi <b>${participant.name}</b>,</p>
-                  <p>Here are the AI-generated notes and key discussion points from your recent session:</p>
-                  <hr style="border: 1px solid #eee; margin: 20px 0;"/>
-                  <!-- Using pre-wrap preserves Gemini's markdown/line breaks -->
-                  <pre style="white-space: pre-wrap; font-family: inherit; background: #f9f9f9; padding: 15px; border-radius: 5px;">${summaryText}</pre>
-                </div>
-              `,
-            });
-
-            participant.summaryStatus = "sent";
-            participant.summarySentAt = new Date();
-          } catch (error) {
-            console.error(
-              `[SummaryAgent] Failed to email ${participant.email}:`,
-              error.message,
-            );
-            participant.summaryStatus = "failed";
-            allEmailsSuccessful = false;
-          }
-        }
+      if (!devoteeEmails || devoteeEmails.length === 0) {
+        console.log(
+          `[SummaryAgent] No registered devotees found for this counselor. Aborting email.`,
+        );
+        return;
       }
 
-      // If everyone got the email, mark the entire meeting as completed and summarized
-      if (allEmailsSuccessful) {
-        meeting.summarySent = true;
-        meeting.summarySentAt = new Date();
-        meeting.status = "completed";
-      }
-
-      await meeting.save();
       console.log(
-        `[SummaryAgent] Finished processing summary for meeting ID: ${meetingId}`,
+        `[SummaryAgent] Sending summary to ${devoteeEmails.length} devotees via BCC.`,
       );
+
+      // 2. Convert the raw markdown from Gemini into formatted HTML
+      const formattedHtmlSummary = marked.parse(summaryText);
+
+      await sendEmail({
+        to: process.env.EMAIL_USER,
+        bcc: devoteeEmails,
+        subject: `Session Summary: ${group.counselorName}'s Class`,
+        text: `Hare Krishna!\n\nHere is the summary of today's session with ${group.counselorName}:\n\n${summaryText}`, // Keep raw text for plain-text fallback
+        html: `
+          <div style="font-family: Arial, sans-serif; padding: 20px; line-height: 1.6; color: #333;">
+            <h2 style="color: #2c3e50;">Hare Krishna! 🙏</h2>
+            <p>Here are the discussion notes and summary from the recent session with <b>${group.counselorName}</b>:</p>
+            <hr style="border: 1px solid #eee; margin: 20px 0;"/>
+            
+            <!-- 3. Inject the parsed HTML here inside a styled div instead of a pre tag -->
+            <div style="background: #f9f9f9; padding: 20px; border-radius: 8px; border: 1px solid #e5e7eb; font-size: 15px;">
+              ${formattedHtmlSummary}
+            </div>
+            
+            <p style="margin-top: 20px; font-size: 12px; color: #888;">This is an automated summary generated by VaniLink AI.</p>
+          </div>
+        `,
+      });
+
+      console.log(`[SummaryAgent] Summary email successfully dispatched.`);
     } catch (error) {
-      console.error(`[SummaryAgent] Critical error processing job:`, error);
+      console.error(
+        `[SummaryAgent] Critical error processing summary job:`,
+        error,
+      );
       throw error;
     }
   });

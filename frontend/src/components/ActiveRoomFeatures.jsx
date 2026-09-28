@@ -5,7 +5,10 @@ import useSpeechToText from "../hooks/useSpeechToText";
 
 export default function ActiveRoomFeatures({ onMeetingEnd }) {
   const { userData } = useContext(AuthContext);
-  const isAdmin = userData?.role === "admin";
+
+  // 1. Check for BOTH admin and counselor roles
+  const isAuthorized =
+    userData?.role === "admin" || userData?.role === "counselor";
 
   const { fullTranscriptRef, caption } = useSpeechToText();
   const [showCaptions, setShowCaptions] = useState(false);
@@ -31,7 +34,7 @@ export default function ActiveRoomFeatures({ onMeetingEnd }) {
         </div>
       )}
 
-      {/* --- UPDATED: Top Left Controls Container --- */}
+      {/* Top Left Controls Container */}
       <div className="absolute top-4 left-4 sm:top-6 sm:left-6 z-50 flex items-center gap-2 sm:gap-4">
         {/* Caption Toggle Button */}
         <button
@@ -46,8 +49,8 @@ export default function ActiveRoomFeatures({ onMeetingEnd }) {
           {showCaptions ? "CC: ON" : "CC: OFF"}
         </button>
 
-        {/* Admin Control Button ONLY */}
-        {isAdmin && (
+        {/* 2. Update the conditional wrapper to use isAuthorized */}
+        {isAuthorized && (
           <button
             onClick={handleAdminDisconnect}
             className="bg-red-600 hover:bg-red-500 text-white px-4 py-2 sm:px-6 sm:py-3 rounded-lg sm:rounded-xl text-xs sm:text-base font-bold shadow-2xl transition-all border-2 border-red-400 animate-pulse"

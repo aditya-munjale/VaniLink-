@@ -3,6 +3,20 @@ import { User } from "../models/user.model.js";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { Meeting } from "../models/meeting.model.js";
+import { CounselorGroup } from "../models/CounselorGroup.js";
+import dns from "dns";
+import util from "util";
+
+const resolveMx = util.promisify(dns.resolveMx);
+
+async function hasValidMxRecord(domain) {
+  try {
+    const addresses = await resolveMx(domain);
+    return addresses && addresses.length > 0;
+  } catch (err) {
+    return false;
+  }
+}
 
 const login = async (req, res) => {
   const { username, password } = req.body;
@@ -24,7 +38,12 @@ const login = async (req, res) => {
     if (isPasswordCorrect) {
       // 1. Pack the role into the secure JWT
       const token = jwt.sign(
-        { username: user.username, name: user.name, role: user.role }, // <-- Added role
+        {
+          _id: user._id.toString(),
+          username: user.username,
+          name: user.name,
+          role: user.role,
+        },
         process.env.JWT_SECRET || "your_super_secret_key",
         { expiresIn: "24h" },
       );
@@ -44,7 +63,6 @@ const login = async (req, res) => {
     return res.status(500).json({ message: `Something went wrong ${e}` });
   }
 };
-
 const register = async (req, res) => {
   const { name, username, password } = req.body;
 
@@ -61,8 +79,19 @@ const register = async (req, res) => {
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
   if (!username || !emailRegex.test(username)) {
-    console.log("❌ Blocked: Invalid Email");
+    console.log("❌ Blocked: Invalid Email Format");
     return res.status(400).json({ message: "Invalid email format" });
+  }
+
+  // --- 2. ADVANCED DOMAIN & MX RECORD CHECK ---
+  const domain = username.split("@")[1];
+  const isValidDomain = await hasValidMxRecord(domain);
+
+  if (!isValidDomain) {
+    console.log(`❌ Blocked: Non-existent or invalid mail domain (@${domain})`);
+    return res.status(400).json({
+      message: `The domain "@${domain}" cannot receive mail. Please check for typos (e.g., gmaill.com).`,
+    });
   }
 
   if (!password || password.length < 6) {
@@ -76,7 +105,6 @@ const register = async (req, res) => {
   try {
     const existingUser = await User.findOne({ username });
     if (existingUser) {
-      // 409 Conflict is the correct status for duplicate data!
       return res.status(409).json({ message: "User already exists" });
     }
 
@@ -89,6 +117,11 @@ const register = async (req, res) => {
     });
 
     await newUser.save();
+    if (req.body.counselorGroupId && newUser.role === "devotee") {
+      await CounselorGroup.findByIdAndUpdate(req.body.counselorGroupId, {
+        $push: { devotees: newUser._id },
+      });
+    }
 
     res.status(httpStatus.CREATED).json({ message: "User Registered" });
   } catch (e) {

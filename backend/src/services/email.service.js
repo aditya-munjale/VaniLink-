@@ -21,26 +21,24 @@ const transporter = nodemailer.createTransport({
  * @param {string} text - The plain text version of the email
  * @param {string} html - The HTML formatted version of the email
  */
-export const sendEmail = async ({ to, subject, text, html }) => {
+export const sendEmail = async ({ to, bcc, subject, text, html }) => {
+  // <-- 1. Add bcc here
   try {
     const info = await transporter.sendMail({
       from: `"${process.env.EMAIL_FROM_NAME}" <${process.env.EMAIL_USER}>`,
       to,
+      bcc, // <-- 2. Pass it directly to Nodemailer here
       subject,
       text,
       html,
     });
 
     console.log(
-      `[EmailService] Email sent successfully to ${to}. Message ID: ${info.messageId}`,
+      `[EmailService] Email sent successfully! Message ID: ${info.messageId}`,
     );
     return { success: true, messageId: info.messageId };
   } catch (error) {
-    console.error(
-      `[EmailService] Failed to send email to ${to}:`,
-      error.message,
-    );
-    // We throw the error so the Agenda job knows it failed and can retry it later
+    console.error(`[EmailService] Failed to send email:`, error.message);
     throw error;
   }
 };

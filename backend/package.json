@@ -28,6 +28,7 @@
     "http-status": "^2.1.0",
     "jsonwebtoken": "^9.0.3",
     "livekit-server-sdk": "^2.15.0",
+    "marked": "^18.0.14",
     "mongoose": "^9.0.2",
     "multer": "^2.0.2",
     "nodemailer": "^10.0.10",
