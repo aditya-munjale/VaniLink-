@@ -1,42 +1,31 @@
-import nodemailer from "nodemailer";
+import { Resend } from "resend";
 import dotenv from "dotenv";
 
 dotenv.config();
 
-// Create the transporter using your .env credentials
-const transporter = nodemailer.createTransport({
-  host: process.env.EMAIL_HOST,
-  port: Number(process.env.EMAIL_PORT) || 587, // Convert to number, default to 587
-  secure: Number(process.env.EMAIL_PORT) === 465, // Automatically true for 465, false for 587
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS,
-  },
-});
+// Initialize Resend with your API key
+const resend = new Resend(process.env.RESEND_API_KEY);
 
-/**
- * Reusable function to send emails
- * @param {string} to - The recipient's email address
- * @param {string} subject - The email subject line
- * @param {string} text - The plain text version of the email
- * @param {string} html - The HTML formatted version of the email
- */
 export const sendEmail = async ({ to, bcc, subject, text, html }) => {
-  // <-- 1. Add bcc here
   try {
-    const info = await transporter.sendMail({
-      from: `"${process.env.EMAIL_FROM_NAME}" <${process.env.EMAIL_USER}>`,
-      to,
-      bcc, // <-- 2. Pass it directly to Nodemailer here
-      subject,
-      text,
-      html,
+    const data = await resend.emails.send({
+      // For testing, Resend requires you to use this exact 'from' address
+      // until you verify your own custom domain on their platform.
+      from: "VaniLink Agent <onboarding@resend.dev>",
+      to: to,
+      bcc: bcc,
+      subject: subject,
+      text: text,
+      html: html,
     });
 
-    console.log(
-      `[EmailService] Email sent successfully! Message ID: ${info.messageId}`,
-    );
-    return { success: true, messageId: info.messageId };
+    if (data.error) {
+      console.error(`[EmailService] API Error:`, data.error.message);
+      throw new Error(data.error.message);
+    }
+
+    console.log(`[EmailService] Email sent successfully! ID: ${data.data.id}`);
+    return { success: true, messageId: data.data.id };
   } catch (error) {
     console.error(`[EmailService] Failed to send email:`, error.message);
     throw error;
